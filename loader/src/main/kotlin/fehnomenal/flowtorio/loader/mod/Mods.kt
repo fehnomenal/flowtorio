@@ -5,6 +5,7 @@ import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import kotlin.system.measureTimeMillis
 
 object Mods {
@@ -133,7 +134,48 @@ object Mods {
         }
 
         private fun calculateLoadOrder(): List<Mod> {
-            TODO()
+            fun Dependency.withMod(block: (Mod) -> Unit) {
+                block(
+                    activeMods.find { it.name == mod }
+                        ?: if (isOptional) return else error("impossible: all dependencies are met")
+                )
+            }
+
+            // We need a topological sort over the DAG the dependencies create.
+
+            val dependents = activeMods.associate { it to 0 }.toMutableMap()
+
+            activeMods.forEach { (_, _, _, dependencies) ->
+                dependencies.forEach { dependency ->
+                    dependency.withMod { dependents[it] = dependents[it]!! + 1 }
+                }
+            }
+
+            val list = mutableListOf<Mod>()
+            val queue = LinkedList<Mod>()
+            queue += dependents.filterValues { it == 0 }.keys
+
+            var visitedNodes = 0
+
+            while (queue.isNotEmpty()) {
+                visitedNodes++
+
+                val mod = queue.poll()
+                list += mod
+
+                mod.dependencies.forEach { dependency ->
+                    dependency.withMod {
+                        val new = dependents[it]!! - 1
+                        dependents[it] = new
+
+                        if (new == 0) {
+                            queue.offer(it)
+                        }
+                    }
+                }
+            }
+
+            return list.reversed()
         }
 
 
