@@ -1,9 +1,12 @@
 package fehnomenal.flowtorio.loader.mod
 
-data class Version(val v: String) : Comparable<Version> {
+data class Version(private val v: String) : Comparable<Version> {
     companion object {
         private val regex = "[0-9]+(\\.[0-9]+)*".toRegex()
     }
+
+
+    private val parts by lazy { v.split('.') }
 
 
     init {
@@ -13,6 +16,18 @@ data class Version(val v: String) : Comparable<Version> {
     }
 
     override fun compareTo(other: Version): Int {
-        TODO()
+        val length = Math.max(parts.size, other.parts.size)
+        for (i in 0 until length) {
+            val thisPart = parts.getOrNull(i)?.toInt() ?: 0
+            val thatPart = other.parts.getOrNull(i)?.toInt() ?: 0
+
+            if (thisPart < thatPart) {
+                return -1
+            }
+            if (thisPart > thatPart) {
+                return 1
+            }
+        }
+        return 0
     }
 }
