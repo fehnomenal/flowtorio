@@ -118,7 +118,18 @@ object Mods {
 
 
         private fun checkDependencies() {
-            TODO()
+            activeMods.forEach { (name, _, _, dependencies) ->
+                dependencies
+                    .filterNot { it.isOptional }
+                    .forEach { (dependencyName, dependencyVersion, _) ->
+                        val dependencyModVersion = activeMods.find { it.name == dependencyName }?.version
+                            ?: throw DependencyUnmetException("Mod $dependencyName is required by $name but not available")
+
+                        if (dependencyModVersion < dependencyVersion) {
+                            throw DependencyUnmetException("Mod $dependencyName is required in version $dependencyVersion or higher by $name")
+                        }
+                    }
+            }
         }
 
         private fun calculateLoadOrder(): List<Mod> {
