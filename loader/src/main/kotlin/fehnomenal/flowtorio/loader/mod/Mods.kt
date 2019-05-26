@@ -95,4 +95,45 @@ object Mods {
             override fun foundBaseGameAndMods(mods: Int, milliSeconds: Long) = Unit
         }
     }
+
+
+    class Loaded(
+        private val activeMods: List<Mod>
+    ) : Iterable<Mod> {
+        var eventListener: EventListener = NoopEventListener
+
+        private val modsInOrder by lazy {
+            eventListener.checkedDependencies(measureTimeMillis { checkDependencies() })
+
+            lateinit var modsInOrder: List<Mod>
+            eventListener.calculatedModLoadOrder(measureTimeMillis {
+                modsInOrder = calculateLoadOrder()
+            })
+
+            modsInOrder
+        }
+
+
+        override fun iterator() = modsInOrder.iterator()
+
+
+        private fun checkDependencies() {
+            TODO()
+        }
+
+        private fun calculateLoadOrder(): List<Mod> {
+            TODO()
+        }
+
+
+        interface EventListener {
+            fun checkedDependencies(milliSeconds: Long)
+            fun calculatedModLoadOrder(milliSeconds: Long)
+        }
+
+        private object NoopEventListener : EventListener {
+            override fun checkedDependencies(milliSeconds: Long) = Unit
+            override fun calculatedModLoadOrder(milliSeconds: Long) = Unit
+        }
+    }
 }
