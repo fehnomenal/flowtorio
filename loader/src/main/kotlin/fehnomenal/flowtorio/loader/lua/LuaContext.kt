@@ -10,7 +10,18 @@ class LuaContext {
             dst: LuaTable,
             keys: Iterable<LuaValue> = src.keys().asIterable()
         ) {
-            TODO()
+            keys.forEach { k ->
+                val v = src[k]
+
+                if (v.istable()) {
+                    if (!dst[k].istable()) {
+                        dst[k] = LuaTable()
+                    }
+                    mergeLuaTables(v.checktable(), dst[k].checktable())
+                } else if (!v.isnil()) {
+                    dst[k] = v
+                }
+            }
         }
     }
 }
