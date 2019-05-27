@@ -20,7 +20,7 @@ object Mods {
             lateinit var thirdPartyMods: List<Mod>
 
             val ms = measureTimeMillis {
-                baseMod = getModFromInfoJson(factorioBasePath.resolve("info.json"))
+                baseMod = getModFromPath(factorioBasePath)
 
                 thirdPartyMods = Files.newDirectoryStream(factorioModsPath) { it.fileName.toString().endsWith(".zip") }
                     .mapNotNull {
@@ -32,11 +32,10 @@ object Mods {
                         val zipFS = FileSystems.newFileSystem(zipUri, emptyMap<String, Any>())
 
                         val modPath = zipFS.getPath(dirName)
-                        val infoFile = modPath.resolve("info.json")
 
-                        if (Files.exists(infoFile)) {
-                            getModFromInfoJson(infoFile)
-                        } else {
+                        try {
+                            getModFromPath(modPath)
+                        } catch (e: FileIsNoModException) {
                             null
                         }
                     }
@@ -52,8 +51,13 @@ object Mods {
         }
 
 
-        private fun getModFromInfoJson(infoJson: Path) =
-            Files.newBufferedReader(infoJson).use {
+        private fun getModFromPath(modPath: Path): Mod {
+            val info = modPath.resolve("info.json")
+            if (!Files.isReadable(info)) {
+                throw FileIsNoModException("info.json not found in $modPath")
+            }
+
+            return Files.newBufferedReader(info).use {
                 val json = JSONObject(it.readText())
                 val dependencies = json.optJSONArray("dependencies")?.let { dependencies ->
                     dependencies.toList()
@@ -81,9 +85,11 @@ object Mods {
                     json.getString("name"),
                     json.getString("title"),
                     Version(json.getString("version")),
-                    dependencies
+                    dependencies,
+                    modPath
                 )
             }
+        }
 
 
         interface EventListener {
