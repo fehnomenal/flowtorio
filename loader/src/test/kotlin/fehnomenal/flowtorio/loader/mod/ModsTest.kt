@@ -12,7 +12,7 @@ import java.nio.file.Path
 class ModsTest : StringSpec({
     "missing dependency" {
         shouldThrow<DependencyUnmetException> {
-            Mods.Loaded(
+            Mods.ToLoad(
                 listOf(
                     Mod(
                         "dependent", "My Dependent Mod", Version("1.0.0"), listOf(
@@ -25,7 +25,7 @@ class ModsTest : StringSpec({
         }.message shouldEndWith "but not available"
 
         shouldNotThrow<DependencyUnmetException> {
-            Mods.Loaded(
+            Mods.ToLoad(
                 listOf(
                     Mod(
                         "dependent", "My Dependent Mod", Version("1.0.0"), listOf(
@@ -40,7 +40,7 @@ class ModsTest : StringSpec({
 
     "wrong dependency version" {
         shouldThrow<DependencyUnmetException> {
-            Mods.Loaded(
+            Mods.ToLoad(
                 listOf(
                     Mod(
                         "dependent", "My Dependent Mod", Version("1.0.0"), listOf(
@@ -57,7 +57,7 @@ class ModsTest : StringSpec({
         }.message shouldContain "or higher"
 
         shouldNotThrow<DependencyUnmetException> {
-            Mods.Loaded(
+            Mods.ToLoad(
                 listOf(
                     Mod(
                         "dependent", "My Dependent Mod", Version("1.0.0"), listOf(
@@ -77,7 +77,7 @@ class ModsTest : StringSpec({
     "single mod" {
         val mod = Mod("mod", "Mod", Version("1.0.0"), emptyList(), Path.of(""))
 
-        Mods.Loaded(listOf(mod)).toList() shouldContainExactly listOf(mod)
+        Mods.ToLoad(listOf(mod)).toList() shouldContainExactly listOf(mod)
     }
 
     "single dependency" {
@@ -92,7 +92,7 @@ class ModsTest : StringSpec({
             Path.of("")
         )
 
-        Mods.Loaded(listOf(mod, dependency)).toList() shouldContainExactly listOf(dependency, mod)
+        Mods.ToLoad(listOf(mod, dependency)).toList() shouldContainExactly listOf(dependency, mod)
     }
 
     "two dependents" {
@@ -116,7 +116,7 @@ class ModsTest : StringSpec({
             Path.of("")
         )
 
-        val modsToLoad = Mods.Loaded(listOf(mod1, dependency, mod2)).toList()
+        val modsToLoad = Mods.ToLoad(listOf(mod1, dependency, mod2)).toList()
         modsToLoad shouldContainInOrder listOf(dependency, mod1)
         modsToLoad shouldContainInOrder listOf(dependency, mod2)
     }

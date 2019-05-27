@@ -9,7 +9,7 @@ import java.util.*
 import kotlin.system.measureTimeMillis
 
 object Mods {
-    class Available(
+    class Finder(
         private val factorioBasePath: Path,
         private val factorioModsPath: Path
     ) {
@@ -41,7 +41,7 @@ object Mods {
                     }
             }
 
-            if (thirdPartyMods.isEmpty()) {
+            if (thirdPartyMods.isNotEmpty()) {
                 eventListener.foundBaseGameAndMods(thirdPartyMods.size, ms)
             } else {
                 eventListener.foundBaseGame(ms)
@@ -104,7 +104,7 @@ object Mods {
     }
 
 
-    class Loaded(
+    class ToLoad(
         private val activeMods: List<Mod>
     ) : Iterable<Mod> {
         var eventListener: EventListener = NoopEventListener
