@@ -11,6 +11,8 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
 
+    implementation(files("libs/luaj-jse-3.0.2.jar"))
+
     implementation("org.json:json:20180813")
 
     testImplementation("io.kotlintest:kotlintest-runner-junit5:3.3.2")
