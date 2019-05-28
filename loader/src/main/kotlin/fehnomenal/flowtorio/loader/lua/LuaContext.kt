@@ -6,12 +6,18 @@ import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaTable
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.lib.jse.JsePlatform
+import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.system.measureTimeMillis
 
 class LuaContext(
     private val factorioCorePath: Path,
     private val mods: List<Mod>
 ) {
+    var eventListener: EventListener = NoopEventListener
+
+    val globalData = LuaTable()
+
     private val modsTable by lazy {
         LuaTable().also {
             mods.forEach { mod ->
@@ -24,6 +30,30 @@ class LuaContext(
         factorioCorePath.resolve("lualib")
     )
 
+
+    fun loadFileForEachMod(fileName: String) {
+        mods
+            .filter { Files.exists(it.path.resolve(fileName)) }
+            .forEach {
+                eventListener.beginLoadingFileForMod(fileName, it)
+                val ms = measureTimeMillis { loadFile(fileName, it) }
+                eventListener.finishLoadingFileForMod(ms)
+            }
+    }
+
+    private fun loadFile(fileName: String, mod: Mod) {
+        val globals = initializeGlobals()
+        val originalKeys = globals.keys().asList()
+
+        globals.loadFactorioCore()
+
+        mergeLuaTables(globalData, globals)
+
+        resourceFinder.currentModUri = mod.path.toUri()
+        globals.loadfile(fileName).call()
+
+        mergeLuaTables(globals, globalData, globals.keys() subtract originalKeys)
+    }
 
     private fun initializeGlobals() =
         JsePlatform.standardGlobals().also {
@@ -39,6 +69,17 @@ class LuaContext(
 
         resourceFinder.currentModUri = factorioCorePath.toUri()
         loadfile(factorioCorePath.resolve("data.lua").toString()).call()
+    }
+
+
+    interface EventListener {
+        fun beginLoadingFileForMod(fileName: String, mod: Mod)
+        fun finishLoadingFileForMod(milliSeconds: Long)
+    }
+
+    private object NoopEventListener : EventListener {
+        override fun beginLoadingFileForMod(fileName: String, mod: Mod) = Unit
+        override fun finishLoadingFileForMod(milliSeconds: Long) = Unit
     }
 
 
