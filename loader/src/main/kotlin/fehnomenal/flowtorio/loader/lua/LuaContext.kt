@@ -9,12 +9,12 @@ import kotlin.system.measureTimeMillis
 abstract class LuaContext protected constructor(
     factorioCorePath: Path,
     private val mods: List<Mod>,
-    private val tableFactory: LuaTable.Factory,
+    private val luaFactory: LuaFactory,
     globalsInit: (LuaTable) -> Unit
 ) {
     var eventListener: EventListener = NoopEventListener
 
-    val rawDataTable = tableFactory.newTable()
+    val rawDataTable = luaFactory.createLuaTable()
     private val globals by lazy {
         val g = createGlobals()
         loadFactorioCore(g, factorioCorePath)
@@ -22,7 +22,7 @@ abstract class LuaContext protected constructor(
     }
 
     private val modsTable by lazy {
-        tableFactory.newTable {
+        luaFactory.createLuaTable {
             mods.forEach { mod ->
                 it[mod.name] = mod.version.toString()
             }
@@ -65,12 +65,12 @@ abstract class LuaContext protected constructor(
     private fun createGlobals() =
         @Suppress("NestedLambdaShadowedImplicitParameter")
         doCreateGlobals().also {
-            it["defines"] = buildDefines(tableFactory)
+            it["defines"] = buildDefines(luaFactory)
             it["mods"] = modsTable
 
             it["log"] = createFunctionLog()
 
-            it["serpent"] = tableFactory.newTable {
+            it["serpent"] = luaFactory.createLuaTable {
                 it["block"] = createFunctionSerpentBlock()
             }
         }.also(::updateGlobals)
@@ -84,15 +84,5 @@ abstract class LuaContext protected constructor(
     private object NoopEventListener : EventListener {
         override fun beginLoadingFileForMod(fileName: String, mod: Mod) = Unit
         override fun finishLoadingFileForMod(milliSeconds: Long) = Unit
-    }
-
-
-    interface Factory {
-        fun createLuaContext(
-            factorioCorePath: Path,
-            mods: List<Mod>,
-            tableFactory: LuaTable.Factory,
-            globalsInit: (LuaTable) -> Unit = {}
-        ): LuaContext
     }
 }

@@ -3,7 +3,7 @@ package fehnomenal.flowtorio.loader.lua.luaj
 import fehnomenal.flowtorio.loader.lua.LuaTable
 import org.luaj.vm2.LuaValue
 
-class LuaJLuaTable(internal val table: org.luaj.vm2.LuaTable) : LuaTable {
+class LuaJLuaTable internal constructor(internal val table: org.luaj.vm2.LuaTable) : LuaTable {
     override val keys
         get() = table.keys().map { it.checkjstring() }
 
@@ -114,10 +114,5 @@ class LuaJLuaTable(internal val table: org.luaj.vm2.LuaTable) : LuaTable {
                 dst[it] = v
             }
         }
-    }
-
-
-    object Factory : LuaTable.Factory {
-        override fun newTable(init: (LuaTable) -> Unit) = LuaJLuaTable(org.luaj.vm2.LuaTable()).also(init)
     }
 }

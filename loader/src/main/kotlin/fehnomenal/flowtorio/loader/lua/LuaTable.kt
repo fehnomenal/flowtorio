@@ -21,9 +21,4 @@ interface LuaTable {
     operator fun set(key: String, value: LuaTable?)
 
     fun mergeWith(src: LuaTable, keys: Iterable<String> = src.keys)
-
-
-    interface Factory {
-        fun newTable(init: (LuaTable) -> Unit = {}): LuaTable
-    }
 }

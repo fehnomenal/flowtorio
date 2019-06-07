@@ -1,6 +1,7 @@
 package fehnomenal.flowtorio.loader.lua.luaj
 
 import fehnomenal.flowtorio.loader.lua.LuaContext
+import fehnomenal.flowtorio.loader.lua.LuaFactory
 import fehnomenal.flowtorio.loader.lua.LuaTable
 import fehnomenal.flowtorio.loader.mod.Mod
 import org.luaj.vm2.Globals
@@ -9,13 +10,13 @@ import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.jse.JsePlatform
 import java.nio.file.Path
 
-class LuaJLuaContext private constructor(
+class LuaJLuaContext internal constructor(
     factorioCorePath: Path,
     mods: List<Mod>,
-    tableFactory: LuaTable.Factory,
+    luaFactory: LuaFactory,
     globalsInit: (LuaTable) -> Unit
 ) :
-    LuaContext(factorioCorePath, mods, tableFactory, globalsInit) {
+    LuaContext(factorioCorePath, mods, luaFactory, globalsInit) {
 
     private val resourceFinder = ExtendedResourceFinder(
         factorioCorePath.resolve("lualib")
@@ -48,15 +49,5 @@ class LuaJLuaContext private constructor(
     override fun loadFile(globals: LuaTable, fileName: String, mod: Mod) {
         resourceFinder.currentModUri = mod.path.toUri()
         ((globals as LuaJLuaTable).table as Globals).loadfile(fileName).call()
-    }
-
-
-    object Factory : LuaContext.Factory {
-        override fun createLuaContext(
-            factorioCorePath: Path,
-            mods: List<Mod>,
-            tableFactory: LuaTable.Factory,
-            globalsInit: (LuaTable) -> Unit
-        ) = LuaJLuaContext(factorioCorePath, mods, tableFactory, globalsInit)
     }
 }
