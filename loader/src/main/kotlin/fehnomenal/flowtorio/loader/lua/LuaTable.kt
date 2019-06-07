@@ -1,7 +1,6 @@
 package fehnomenal.flowtorio.loader.lua
 
 interface LuaTable {
-    val factory: Factory
     val keys: Iterable<String>
 
     operator fun get(key: Int): Any?
@@ -21,23 +20,7 @@ interface LuaTable {
     operator fun set(key: String, value: String?)
     operator fun set(key: String, value: LuaTable?)
 
-    fun mergeWith(
-        src: LuaTable,
-        keys: Iterable<String> = src.keys
-    ) {
-        keys.forEach { k ->
-            val v = src[k]
-
-            if (v is LuaTable) {
-                if (this[k] !is LuaTable) {
-                    this[k] = v.factory.newTable()
-                }
-                (this[k] as LuaTable).mergeWith(v)
-            } else if (v != null) {
-                this[k] = v
-            }
-        }
-    }
+    fun mergeWith(src: LuaTable, keys: Iterable<String> = src.keys)
 
 
     interface Factory {

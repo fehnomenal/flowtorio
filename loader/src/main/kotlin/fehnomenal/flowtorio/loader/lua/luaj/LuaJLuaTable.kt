@@ -3,7 +3,7 @@ package fehnomenal.flowtorio.loader.lua.luaj
 import fehnomenal.flowtorio.loader.lua.LuaTable
 import org.luaj.vm2.LuaValue
 
-class LuaJLuaTable(private val table: org.luaj.vm2.LuaTable, override val factory: LuaTable.Factory) : LuaTable {
+class LuaJLuaTable(internal val table: org.luaj.vm2.LuaTable) : LuaTable {
     override val keys
         get() = table.keys().map { it.checkjstring() }
 
@@ -14,12 +14,12 @@ class LuaJLuaTable(private val table: org.luaj.vm2.LuaTable, override val factor
 
     private fun unbox(value: LuaValue?): Any? = when {
         value == null || value.isnil() -> null
-        value.istable() -> LuaJLuaTable(value as org.luaj.vm2.LuaTable, factory)
+        value.istable() -> LuaJLuaTable(value as org.luaj.vm2.LuaTable)
         value.isint() -> value.checkint()
         value.islong() -> value.checklong()
         value.isstring() -> value.checkjstring()
         value.isboolean() -> value.checkboolean()
-        else -> throw IllegalArgumentException("Unhandled type ${value.javaClass} of $value")
+        else -> throw IllegalArgumentException("Get: unhandled type ${value.javaClass} of $value")
     }
 
 
@@ -32,7 +32,7 @@ class LuaJLuaTable(private val table: org.luaj.vm2.LuaTable, override val factor
                 is LuaTable -> set(key, it)
                 is String -> set(key, it)
                 is LuaValue -> table[key] = it
-                else -> throw IllegalArgumentException("Unhandled type ${it.javaClass} of $it")
+                else -> throw IllegalArgumentException("Set: unhandled type ${it.javaClass} of $it")
             }
         } ?: run { table[key] = LuaValue.NIL }
     }
@@ -97,7 +97,27 @@ class LuaJLuaTable(private val table: org.luaj.vm2.LuaTable, override val factor
     }
 
 
+    override fun mergeWith(src: LuaTable, keys: Iterable<String>) =
+        mergeTables((src as LuaJLuaTable).table, table, keys.map { LuaValue.valueOf(it) })
+
+    private fun mergeTables(src: org.luaj.vm2.LuaTable, dst: org.luaj.vm2.LuaTable, keys: Iterable<LuaValue>) {
+        keys.forEach {
+            val v = src[it]
+
+            if (v.istable()) {
+                if (!dst[it].istable()) {
+                    dst[it] = org.luaj.vm2.LuaTable()
+                }
+
+                mergeTables(v.checktable(), dst[it].checktable(), v.checktable().keys().asList())
+            } else if (!v.isnil()) {
+                dst[it] = v
+            }
+        }
+    }
+
+
     object Factory : LuaTable.Factory {
-        override fun newTable(init: (LuaTable) -> Unit) = LuaJLuaTable(org.luaj.vm2.LuaTable(), this).also(init)
+        override fun newTable(init: (LuaTable) -> Unit) = LuaJLuaTable(org.luaj.vm2.LuaTable()).also(init)
     }
 }

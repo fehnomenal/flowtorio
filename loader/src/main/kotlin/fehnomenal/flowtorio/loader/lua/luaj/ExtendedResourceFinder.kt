@@ -1,4 +1,4 @@
-package fehnomenal.flowtorio.loader.lua
+package fehnomenal.flowtorio.loader.lua.luaj
 
 import org.luaj.vm2.lib.ResourceFinder
 import java.io.InputStream

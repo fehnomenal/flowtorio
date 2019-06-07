@@ -1,21 +1,21 @@
 package fehnomenal.flowtorio.loader
 
-import org.luaj.vm2.LuaTable
+import fehnomenal.flowtorio.loader.lua.LuaTable
 
-// todo: fill with correct values
 @Suppress("NestedLambdaShadowedImplicitParameter")
-object Defines : LuaTable() {
-    init {
-        this["difficulty_settings"] = LuaTable().also {
-            it["recipe_difficulty"] = LuaTable().also {
+fun buildDefines(tableFactory: LuaTable.Factory): LuaTable {
+    // todo: fill with correct values
+    return tableFactory.newTable().also {
+        it["difficulty_settings"] = tableFactory.newTable().also {
+            it["recipe_difficulty"] = tableFactory.newTable().also {
                 it["normal"] = 1
             }
-            it["technology_difficulty"] = LuaTable().also {
+            it["technology_difficulty"] = tableFactory.newTable().also {
                 it["normal"] = 1
             }
         }
 
-        this["direction"] = LuaTable().also {
+        it["direction"] = tableFactory.newTable().also {
             it["north"] = 1
             it["northeast"] = 1
             it["east"] = 1
@@ -25,6 +25,5 @@ object Defines : LuaTable() {
             it["west"] = 1
             it["northwest"] = 1
         }
-
     }
 }

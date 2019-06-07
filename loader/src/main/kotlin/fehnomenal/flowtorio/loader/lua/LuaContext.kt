@@ -1,75 +1,79 @@
 package fehnomenal.flowtorio.loader.lua
 
-import fehnomenal.flowtorio.loader.Defines
+import fehnomenal.flowtorio.loader.buildDefines
 import fehnomenal.flowtorio.loader.mod.Mod
-import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaTable
-import org.luaj.vm2.LuaValue
-import org.luaj.vm2.lib.jse.JsePlatform
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
-class LuaContext(
-    private val factorioCorePath: Path,
-    private val mods: List<Mod>
+abstract class LuaContext protected constructor(
+    factorioCorePath: Path,
+    private val mods: List<Mod>,
+    private val tableFactory: LuaTable.Factory,
+    globalsInit: (LuaTable) -> Unit
 ) {
     var eventListener: EventListener = NoopEventListener
 
-    val globalData = LuaTable()
+    val rawDataTable = tableFactory.newTable()
+    private val globals by lazy {
+        val g = createGlobals()
+        loadFactorioCore(g, factorioCorePath)
+        g.also(globalsInit)
+    }
 
     private val modsTable by lazy {
-        LuaTable().also {
+        tableFactory.newTable {
             mods.forEach { mod ->
                 it[mod.name] = mod.version.toString()
             }
         }
     }
 
-    private val resourceFinder = ExtendedResourceFinder(
-        factorioCorePath.resolve("lualib")
-    )
-
 
     fun loadFileForEachMod(fileName: String) {
         mods
             .filter { Files.exists(it.path.resolve(fileName)) }
-            .forEach {
-                eventListener.beginLoadingFileForMod(fileName, it)
-                val ms = measureTimeMillis { loadFile(fileName, it) }
+            .forEach { mod ->
+                eventListener.beginLoadingFileForMod(fileName, mod)
+
+                val ms = measureTimeMillis {
+                    loadFile(globals, fileName, mod)
+
+                    globals["data"]
+                        ?.takeIf { it is LuaTable }
+                        ?.let { (it as LuaTable)["raw"] }
+                        ?.takeIf { it is LuaTable }
+                        ?.let { rawDataTable.mergeWith(it as LuaTable) }
+                }
+
                 eventListener.finishLoadingFileForMod(ms)
             }
     }
 
-    private fun loadFile(fileName: String, mod: Mod) {
-        val globals = initializeGlobals()
-        val originalKeys = globals.keys().asList()
+    protected abstract fun loadFile(globals: LuaTable, fileName: String, mod: Mod)
 
-        globals.loadFactorioCore()
+    protected abstract fun doCreateGlobals(): LuaTable
+    protected open fun updateGlobals(globals: LuaTable) = Unit
 
-        mergeLuaTables(globalData, globals)
+    protected abstract fun createFunctionLog(): Any
+    protected abstract fun createFunctionSerpentBlock(): Any
 
-        resourceFinder.currentModUri = mod.path.toUri()
-        globals.loadfile(fileName).call()
 
-        mergeLuaTables(globals, globalData, globals.keys() subtract originalKeys)
-    }
+    protected abstract fun loadFactorioCore(globals: LuaTable, factorioCorePath: Path)
 
-    private fun initializeGlobals() =
-        JsePlatform.standardGlobals().also {
-            it.finder = resourceFinder
 
-            it["defines"] = Defines
-
+    private fun createGlobals() =
+        @Suppress("NestedLambdaShadowedImplicitParameter")
+        doCreateGlobals().also {
+            it["defines"] = buildDefines(tableFactory)
             it["mods"] = modsTable
-        }
 
-    private fun Globals.loadFactorioCore() {
-        loadfile("dataloader.lua").call()
+            it["log"] = createFunctionLog()
 
-        resourceFinder.currentModUri = factorioCorePath.toUri()
-        loadfile(factorioCorePath.resolve("data.lua").toString()).call()
-    }
+            it["serpent"] = tableFactory.newTable {
+                it["block"] = createFunctionSerpentBlock()
+            }
+        }.also(::updateGlobals)
 
 
     interface EventListener {
@@ -83,24 +87,12 @@ class LuaContext(
     }
 
 
-    companion object {
-        fun mergeLuaTables(
-            src: LuaTable,
-            dst: LuaTable,
-            keys: Iterable<LuaValue> = src.keys().asIterable()
-        ) {
-            keys.forEach { k ->
-                val v = src[k]
-
-                if (v.istable()) {
-                    if (!dst[k].istable()) {
-                        dst[k] = LuaTable()
-                    }
-                    mergeLuaTables(v.checktable(), dst[k].checktable())
-                } else if (!v.isnil()) {
-                    dst[k] = v
-                }
-            }
-        }
+    interface Factory {
+        fun createLuaContext(
+            factorioCorePath: Path,
+            mods: List<Mod>,
+            tableFactory: LuaTable.Factory,
+            globalsInit: (LuaTable) -> Unit = {}
+        ): LuaContext
     }
 }
