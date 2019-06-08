@@ -11,12 +11,12 @@ class ExtendedResourceFinder(
 ) : ResourceFinder {
     var currentModUri: URI? = null
 
-    private var lastPath: Path? = null
+    private val lastPaths = LinkedHashSet<Path>()
 
     override fun findResource(fileName: String): InputStream? {
         val path = findPath(fileName)
         if (path != null) {
-            lastPath = path
+            lastPaths.add(path)
 
             return Files.newInputStream(path)
         }
@@ -36,8 +36,11 @@ class ExtendedResourceFinder(
             Path.of(uri).resolve(fileName).takeIf { Files.exists(it) }?.let { return it }
         }
 
-        lastPath?.takeIf { it.endsWith(fileName) }?.let { return it }
-        lastPath?.resolveSibling(fileName)?.takeIf { Files.exists(it) }?.let { return it }
+        lastPaths.find { it.endsWith(fileName) }?.let { return it }
+        lastPaths.asSequence()
+            .map { it.resolveSibling(fileName) }
+            .firstOrNull { Files.exists(it) }
+            ?.let { return it }
 
         coreLuaLibDir.resolve(fileName).takeIf { Files.exists(it) }?.let { return it }
 
