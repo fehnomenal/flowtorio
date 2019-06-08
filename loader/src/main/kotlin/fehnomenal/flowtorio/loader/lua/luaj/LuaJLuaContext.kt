@@ -5,9 +5,15 @@ import fehnomenal.flowtorio.loader.lua.LuaFactory
 import fehnomenal.flowtorio.loader.lua.LuaTable
 import fehnomenal.flowtorio.loader.mod.Mod
 import org.luaj.vm2.Globals
+import org.luaj.vm2.LoadState
 import org.luaj.vm2.LuaValue
+import org.luaj.vm2.compiler.LuaC
+import org.luaj.vm2.lib.Bit32Lib
 import org.luaj.vm2.lib.OneArgFunction
-import org.luaj.vm2.lib.jse.JsePlatform
+import org.luaj.vm2.lib.TableLib
+import org.luaj.vm2.lib.jse.JseBaseLib
+import org.luaj.vm2.lib.jse.JseMathLib
+import org.luaj.vm2.lib.jse.JseStringLib
 import java.nio.file.Path
 
 class LuaJLuaContext internal constructor(
@@ -22,7 +28,16 @@ class LuaJLuaContext internal constructor(
         factorioCorePath.resolve("lualib")
     )
 
-    override fun doCreateGlobals() = LuaJLuaTable(JsePlatform.standardGlobals().also {
+    override fun doCreateGlobals() = LuaJLuaTable(Globals().also {
+        it.load(JseBaseLib())
+        it.load(CustomPackageLib(resourceFinder))
+        it.load(Bit32Lib())
+        it.load(TableLib())
+        it.load(JseStringLib())
+        it.load(JseMathLib())
+        LoadState.install(it)
+        LuaC.install(it)
+
         it.finder = resourceFinder
     })
 
@@ -39,15 +54,19 @@ class LuaJLuaContext internal constructor(
 
     override fun loadFactorioCore(globals: LuaTable, factorioCorePath: Path) {
         globals as LuaJLuaTable
+        globals.table as Globals
 
-        (globals.table as Globals).loadfile("dataloader.lua").call()
+        globals.table.loadfile("dataloader.lua").call()
 
         resourceFinder.currentModUri = factorioCorePath.toUri()
         globals.table.loadfile(factorioCorePath.resolve("data.lua").toString()).call()
     }
 
     override fun loadFile(globals: LuaTable, fileName: String, mod: Mod) {
+        globals as LuaJLuaTable
+        globals.table as Globals
+
         resourceFinder.currentModUri = mod.path.toUri()
-        ((globals as LuaJLuaTable).table as Globals).loadfile(fileName).call()
+        globals.table.loadfile(fileName).call()
     }
 }

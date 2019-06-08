@@ -31,6 +31,9 @@ abstract class LuaContext protected constructor(
 
 
     fun loadFileForEachMod(fileName: String) {
+        // Force execution of the lazy handler.
+        globals
+
         mods
             .filter { Files.exists(it.path.resolve(fileName)) }
             .forEach { mod ->
