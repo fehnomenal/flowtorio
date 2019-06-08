@@ -11,6 +11,7 @@ object LuaJFactory : LuaFactory {
     override fun createLuaContext(
         factorioCorePath: Path,
         mods: List<Mod>,
-        globalsInit: (LuaTable) -> Unit
-    ) = LuaJLuaContext(factorioCorePath, mods, this, globalsInit)
+        globalsInit: (LuaTable) -> Unit,
+        buildDefines: (LuaFactory) -> LuaTable
+    ) = LuaJLuaContext(factorioCorePath, mods, this, globalsInit, buildDefines)
 }

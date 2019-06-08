@@ -20,9 +20,10 @@ class LuaJLuaContext internal constructor(
     factorioCorePath: Path,
     mods: List<Mod>,
     luaFactory: LuaFactory,
-    globalsInit: (LuaTable) -> Unit
+    globalsInit: (LuaTable) -> Unit,
+    buildDefines: (LuaFactory) -> LuaTable
 ) :
-    LuaContext(factorioCorePath, mods, luaFactory, globalsInit) {
+    LuaContext(factorioCorePath, mods, luaFactory, globalsInit, buildDefines) {
 
     private val resourceFinder = ExtendedResourceFinder(
         factorioCorePath.resolve("lualib")

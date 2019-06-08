@@ -1,6 +1,5 @@
 package fehnomenal.flowtorio.loader.lua
 
-import fehnomenal.flowtorio.loader.buildDefines
 import fehnomenal.flowtorio.loader.mod.Mod
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,7 +9,8 @@ abstract class LuaContext protected constructor(
     factorioCorePath: Path,
     private val mods: List<Mod>,
     private val luaFactory: LuaFactory,
-    globalsInit: (LuaTable) -> Unit
+    globalsInit: (LuaTable) -> Unit,
+    private val buildDefines: (LuaFactory) -> LuaTable
 ) {
     var eventListener: EventListener = NoopEventListener
 

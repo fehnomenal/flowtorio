@@ -9,6 +9,7 @@ interface LuaFactory {
     fun createLuaContext(
         factorioCorePath: Path,
         mods: List<Mod>,
-        globalsInit: (LuaTable) -> Unit = {}
+        globalsInit: (LuaTable) -> Unit = {},
+        buildDefines: (LuaFactory) -> LuaTable
     ): LuaContext
 }
