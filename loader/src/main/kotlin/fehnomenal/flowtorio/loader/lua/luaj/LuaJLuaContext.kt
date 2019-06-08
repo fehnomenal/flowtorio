@@ -46,6 +46,11 @@ class LuaJLuaContext internal constructor(
         override fun call(arg: LuaValue) = LuaValue.NIL
     }
 
+    override fun createFunctionTableSize() = object : OneArgFunction() {
+        override fun name() = "table_size"
+        override fun call(arg: LuaValue) = LuaValue.valueOf(arg.checktable().keys().size)
+    }
+
     override fun createFunctionSerpentBlock() = object : OneArgFunction() {
         override fun name() = "serpent.block"
         override fun call(arg: LuaValue) = LuaValue.NIL

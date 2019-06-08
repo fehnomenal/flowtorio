@@ -59,6 +59,7 @@ abstract class LuaContext protected constructor(
     protected open fun updateGlobals(globals: LuaTable) = Unit
 
     protected abstract fun createFunctionLog(): Any
+    protected abstract fun createFunctionTableSize(): Any
     protected abstract fun createFunctionSerpentBlock(): Any
 
 
@@ -72,6 +73,7 @@ abstract class LuaContext protected constructor(
             it["mods"] = modsTable
 
             it["log"] = createFunctionLog()
+            it["table_size"] = createFunctionTableSize()
 
             it["serpent"] = luaFactory.createLuaTable {
                 it["block"] = createFunctionSerpentBlock()
