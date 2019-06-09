@@ -30,4 +30,6 @@ data class Version(private val v: String) : Comparable<Version> {
         }
         return 0
     }
+
+    override fun toString() = v
 }
