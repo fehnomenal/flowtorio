@@ -8,6 +8,9 @@ import io.kotlintest.specs.StringSpec
 import org.luaj.vm2.LuaValue
 
 abstract class LuaTableTest(luaFactory: LuaFactory) : StringSpec({
+    fun String.toLuaKey() = LuaKey.String(this)
+
+
     "merge empty lua tables" {
         val dst = luaFactory.createLuaTable()
         dst.mergeWith(luaFactory.createLuaTable())
@@ -17,7 +20,7 @@ abstract class LuaTableTest(luaFactory: LuaFactory) : StringSpec({
     "merge lua tables with additional value" {
         val dst = luaFactory.createLuaTable { it["abc"] = 13 }
         dst.mergeWith(luaFactory.createLuaTable { it["def"] = 37 })
-        dst.keys.toList() shouldContainExactly listOf("abc", "def")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey(), "def".toLuaKey())
         dst["abc"] shouldBe 13
         dst["def"] shouldBe 37
     }
@@ -25,21 +28,21 @@ abstract class LuaTableTest(luaFactory: LuaFactory) : StringSpec({
     "merge lua tables with additional nil value" {
         val dst = luaFactory.createLuaTable { it["abc"] = 13 }
         dst.mergeWith(luaFactory.createLuaTable { it["def"] = LuaValue.NIL })
-        dst.keys.toList() shouldContainExactly listOf("abc")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey())
         dst["abc"] shouldBe 13
     }
 
     "merge lua tables with value override" {
         val dst = luaFactory.createLuaTable { it["abc"] = 13 }
         dst.mergeWith(luaFactory.createLuaTable { it["abc"] = 37 })
-        dst.keys.toList() shouldContainExactly listOf("abc")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey())
         dst["abc"] shouldBe 37
     }
 
     "merge lua tables with nil value override" {
         val dst = luaFactory.createLuaTable { it["abc"] = 13 }
         dst.mergeWith(luaFactory.createLuaTable { it["abc"] = LuaValue.NIL })
-        dst.keys.toList() shouldContainExactly listOf("abc")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey())
         dst["abc"] shouldBe 13
     }
 
@@ -49,8 +52,8 @@ abstract class LuaTableTest(luaFactory: LuaFactory) : StringSpec({
             it["abc"] = luaFactory.createLuaTable { it["def"] = 13 }
         }
         dst.mergeWith(src)
-        dst.keys.toList() shouldContainExactly listOf("abc")
-        (dst["abc"] as LuaTable).keys.toList() shouldContainExactly listOf("def")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey())
+        (dst["abc"] as LuaTable).keys.toList() shouldContainExactly listOf("def".toLuaKey())
         (dst["abc"] as LuaTable)["def"] shouldBe 13
     }
 
@@ -60,8 +63,8 @@ abstract class LuaTableTest(luaFactory: LuaFactory) : StringSpec({
             it["abc"] = luaFactory.createLuaTable { it["def"] = 13 }
         }
         dst.mergeWith(src)
-        dst.keys.toList() shouldContainExactly listOf("abc")
-        (dst["abc"] as LuaTable).keys.toList() shouldContainExactly listOf("def")
+        dst.keys.toList() shouldContainExactly listOf("abc".toLuaKey())
+        (dst["abc"] as LuaTable).keys.toList() shouldContainExactly listOf("def".toLuaKey())
         (dst["abc"] as LuaTable)["def"] shouldBe 13
 
         (src["abc"] as LuaTable)["def"] = 37
