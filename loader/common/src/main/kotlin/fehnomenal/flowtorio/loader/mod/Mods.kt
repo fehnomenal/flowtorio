@@ -117,12 +117,16 @@ object Mods {
         private val modsInOrder by lazy {
             eventListener.checkedDependencies(measureTimeMillis { checkDependencies() })
 
-            lateinit var modsInOrder: List<Mod>
-            eventListener.calculatedModLoadOrder(measureTimeMillis {
-                modsInOrder = calculateLoadOrder()
-            })
+            if (activeMods.size > 1) {
+                lateinit var modsInOrder: List<Mod>
+                eventListener.calculatedModLoadOrder(measureTimeMillis {
+                    modsInOrder = calculateLoadOrder()
+                })
 
-            modsInOrder
+                modsInOrder
+            } else {
+                activeMods
+            }
         }
 
 
