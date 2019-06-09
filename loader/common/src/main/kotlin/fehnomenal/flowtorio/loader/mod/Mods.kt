@@ -10,8 +10,8 @@ import kotlin.system.measureTimeMillis
 
 object Mods {
     class Finder(
-        private val factorioBasePath: Path,
-        private val factorioModsPath: Path
+        factorioBasePath: Path,
+        factorioModsPath: Path?
     ) {
         var eventListener: EventListener = NoopEventListener
 
@@ -22,23 +22,28 @@ object Mods {
             val ms = measureTimeMillis {
                 baseMod = getModFromPath(factorioBasePath)
 
-                thirdPartyMods = Files.newDirectoryStream(factorioModsPath) { it.fileName.toString().endsWith(".zip") }
-                    .mapNotNull {
-                        val dirName = it.fileName.toString().removeSuffix(".zip")
+                thirdPartyMods =
+                    factorioModsPath
+                        ?.let { path ->
+                            Files.newDirectoryStream(path) { it.fileName.toString().endsWith(".zip") }
+                                .mapNotNull {
+                                    val dirName = it.fileName.toString().removeSuffix(".zip")
 
-                        val fileUri = it.toUri()
-                        val zipUri = URI("jar:${fileUri.scheme}", fileUri.path, null)
+                                    val fileUri = it.toUri()
+                                    val zipUri = URI("jar:${fileUri.scheme}", fileUri.path, null)
 
-                        val zipFS = FileSystems.newFileSystem(zipUri, emptyMap<String, Any>())
+                                    val zipFS = FileSystems.newFileSystem(zipUri, emptyMap<String, Any>())
 
-                        val modPath = zipFS.getPath(dirName)
+                                    val modPath = zipFS.getPath(dirName)
 
-                        try {
-                            getModFromPath(modPath)
-                        } catch (e: FileIsNoModException) {
-                            null
+                                    try {
+                                        getModFromPath(modPath)
+                                    } catch (e: FileIsNoModException) {
+                                        null
+                                    }
+                                }
                         }
-                    }
+                        ?: emptyList()
             }
 
             if (thirdPartyMods.isNotEmpty()) {
