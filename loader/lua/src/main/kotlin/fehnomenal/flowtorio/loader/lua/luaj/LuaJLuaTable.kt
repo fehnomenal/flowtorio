@@ -2,14 +2,14 @@ package fehnomenal.flowtorio.loader.lua.luaj
 
 import fehnomenal.flowtorio.loader.lua.LuaKey
 import fehnomenal.flowtorio.loader.lua.LuaTable
-import org.luaj.vm2.LuaValue
+import org.luaj.vm2.*
 
 class LuaJLuaTable internal constructor(internal val table: org.luaj.vm2.LuaTable) : LuaTable {
     override val keys
         get() = table.keys().map {
-            when {
-                it.isstring() -> LuaKey.String(it.checkjstring())
-                it.isint() -> LuaKey.Int(it.checkint())
+            when (it) {
+                is LuaInteger -> LuaKey.Int(it.toint())
+                is LuaString -> LuaKey.String(it.tojstring())
                 else -> throw IllegalArgumentException("Unhandled key type ${it.javaClass} of $it")
             }
         }
@@ -23,13 +23,13 @@ class LuaJLuaTable internal constructor(internal val table: org.luaj.vm2.LuaTabl
 
     override fun get(key: LuaKey) = unbox(table[key.toLuaValue()])
 
-    private fun unbox(value: LuaValue?): Any? = when {
-        value == null || value.isnil() -> null
-        value.istable() -> LuaJLuaTable(value as org.luaj.vm2.LuaTable)
-        value.isint() -> value.checkint()
-        value.islong() -> value.checklong()
-        value.isstring() -> value.checkjstring()
-        value.isboolean() -> value.checkboolean()
+    private fun unbox(value: LuaValue?): Any? = when (value) {
+        null, is LuaNil -> null
+        is LuaBoolean -> value.toboolean()
+        is LuaDouble -> value.todouble()
+        is LuaInteger -> value.toint()
+        is LuaString -> value.tojstring()
+        is org.luaj.vm2.LuaTable -> LuaJLuaTable(value)
         else -> throw IllegalArgumentException("Get: unhandled type ${value.javaClass} of $value")
     }
 
