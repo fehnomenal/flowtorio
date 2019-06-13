@@ -9,6 +9,7 @@ import org.luaj.vm2.LoadState
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.compiler.LuaC
 import org.luaj.vm2.lib.Bit32Lib
+import org.luaj.vm2.lib.DebugLib
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.TableLib
 import org.luaj.vm2.lib.jse.JseBaseLib
@@ -36,6 +37,7 @@ class LuaJLuaContext internal constructor(
         it.load(TableLib())
         it.load(JseStringLib())
         it.load(JseMathLib())
+        it.load(DebugLib())
         LoadState.install(it)
         LuaC.install(it)
 
